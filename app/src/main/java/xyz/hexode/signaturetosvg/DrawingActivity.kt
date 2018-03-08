@@ -7,9 +7,12 @@ import android.os.Environment
 import android.support.v7.app.AppCompatActivity
 import android.view.MotionEvent
 import android.view.View
+import com.flask.colorpicker.ColorPickerView
+import com.flask.colorpicker.builder.ColorPickerDialogBuilder
 import kotlinx.android.synthetic.main.activity_drawing.*
 import java.io.File
 import java.io.FileOutputStream
+
 
 const val TOUCH_TOLERANCE = 4f
 
@@ -20,25 +23,37 @@ const val TOUCH_TOLERANCE = 4f
  */
 class DrawingActivity : AppCompatActivity() {
 
-    private var mPaint: Paint? = null
+    private var mPaint: Paint = Paint()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         val dv = DrawingView(this)
         setContentView(R.layout.activity_drawing)
         drawingLayout.addView(dv)
-        mPaint = Paint()
-        mPaint!!.isAntiAlias = true
-        mPaint!!.isDither = true
-        mPaint!!.color = Color.GREEN
-        mPaint!!.style = Paint.Style.STROKE
-        mPaint!!.strokeJoin = Paint.Join.ROUND
-        mPaint!!.strokeCap = Paint.Cap.ROUND
-        mPaint!!.strokeWidth = 12f
+        mPaint.isAntiAlias = true
+        mPaint.isDither = true
+        mPaint.color = Color.GREEN
+        mPaint.style = Paint.Style.STROKE
+        mPaint.strokeJoin = Paint.Join.ROUND
+        mPaint.strokeCap = Paint.Cap.ROUND
+        mPaint.strokeWidth = 12f
 
         buttonSave.setOnClickListener {
             val outFile = FileOutputStream(File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS), "signature.svg"))
             dv.mSvg.writeXml(outFile)
+        }
+
+        buttonPickColor.setOnClickListener {
+            ColorPickerDialogBuilder
+                    .with(this)
+                    .setTitle("Choose color")
+                    .initialColor(mPaint.color)
+                    .wheelType(ColorPickerView.WHEEL_TYPE.FLOWER)
+                    .density(12)
+                    .setOnColorSelectedListener { selectedColor -> toast("onColorSelected: 0x" + Integer.toHexString(selectedColor)) }
+                    .setPositiveButton("ok") { _, selectedColor, _ -> mPaint.color = selectedColor }
+                    .build()
+                    .show()
         }
     }
 
@@ -75,12 +90,12 @@ class DrawingActivity : AppCompatActivity() {
             super.onDraw(canvas)
 
             canvas.drawBitmap(mBitmap!!, 0f, 0f, mBitmapPaint)
-            canvas.drawPath(mPath, mPaint!!)
+            canvas.drawPath(mPath, mPaint)
         }
 
         private fun touchStart(x: Float, y: Float) {
             mPath.reset()
-            mSvg.startPath()
+            mSvg.startPath(mPaint.color, mPaint.strokeWidth.toInt())
             mPath.moveTo(x, y)
             mSvg.moveTo(x, y)
             mX = x
@@ -102,7 +117,7 @@ class DrawingActivity : AppCompatActivity() {
             mPath.lineTo(mX, mY)
             mSvg.lineTo(mX, mY)
             // commit the path to our offscreen
-            mCanvas!!.drawPath(mPath, mPaint!!)
+            mCanvas!!.drawPath(mPath, mPaint)
             // kill this so we don't double draw
             mPath.reset()
         }
