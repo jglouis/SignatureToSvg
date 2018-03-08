@@ -1,16 +1,15 @@
 package xyz.hexode.signaturetosvg
 
 import android.content.Context
-import android.graphics.Bitmap
-import android.graphics.Canvas
-import android.graphics.Color
-import android.graphics.Paint
-import android.graphics.Path
+import android.graphics.*
 import android.os.Bundle
+import android.os.Environment
 import android.support.v7.app.AppCompatActivity
 import android.view.MotionEvent
 import android.view.View
 import kotlinx.android.synthetic.main.activity_drawing.*
+import java.io.File
+import java.io.FileOutputStream
 
 const val TOUCH_TOLERANCE = 4f
 
@@ -36,6 +35,11 @@ class DrawingActivity : AppCompatActivity() {
         mPaint!!.strokeJoin = Paint.Join.ROUND
         mPaint!!.strokeCap = Paint.Cap.ROUND
         mPaint!!.strokeWidth = 12f
+
+        buttonSave.setOnClickListener {
+            val outFile = FileOutputStream(File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS), "signature.svg"))
+            dv.mSvg.writeXml(outFile)
+        }
     }
 
     inner class DrawingView(context: Context) : View(context) {
@@ -43,9 +47,9 @@ class DrawingActivity : AppCompatActivity() {
         private var mBitmap: Bitmap? = null
         private var mCanvas: Canvas? = null
         private val mPath: Path = Path()
+        internal var mSvg: Svg = Svg(0, 0)
         private val mBitmapPaint: Paint = Paint(Paint.DITHER_FLAG)
         private val circlePaint: Paint = Paint()
-        private val circlePath: Path = Path()
 
         private var mX: Float = 0f
         private var mY: Float = 0f
@@ -63,6 +67,8 @@ class DrawingActivity : AppCompatActivity() {
 
             mBitmap = Bitmap.createBitmap(w, h, Bitmap.Config.ARGB_8888)
             mCanvas = Canvas(mBitmap!!)
+
+            mSvg = Svg(measuredWidth, measuredHeight)
         }
 
         override fun onDraw(canvas: Canvas) {
@@ -70,12 +76,13 @@ class DrawingActivity : AppCompatActivity() {
 
             canvas.drawBitmap(mBitmap!!, 0f, 0f, mBitmapPaint)
             canvas.drawPath(mPath, mPaint!!)
-            canvas.drawPath(circlePath, circlePaint)
         }
 
         private fun touchStart(x: Float, y: Float) {
             mPath.reset()
+            mSvg.startPath()
             mPath.moveTo(x, y)
+            mSvg.moveTo(x, y)
             mX = x
             mY = y
         }
@@ -85,17 +92,15 @@ class DrawingActivity : AppCompatActivity() {
             val dy = Math.abs(y - mY)
             if (dx >= TOUCH_TOLERANCE || dy >= TOUCH_TOLERANCE) {
                 mPath.quadTo(mX, mY, (x + mX) / 2, (y + mY) / 2)
+                mSvg.quadTo(mX, mY, (x + mX) / 2, (y + mY) / 2)
                 mX = x
                 mY = y
-
-                circlePath.reset()
-                circlePath.addCircle(mX, mY, 30f, Path.Direction.CW)
             }
         }
 
         private fun touchUp() {
             mPath.lineTo(mX, mY)
-            circlePath.reset()
+            mSvg.lineTo(mX, mY)
             // commit the path to our offscreen
             mCanvas!!.drawPath(mPath, mPaint!!)
             // kill this so we don't double draw
