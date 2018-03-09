@@ -11,7 +11,7 @@ import java.io.OutputStream
 class Svg(private val width: Int, private val height: Int) {
     private val mPaths: MutableList<Path> = mutableListOf()
 
-    fun startPath(strokeColor: Int = Color.GREEN, strokeWidth: Int = 5, strokeCap: Path.Cap = Path.Cap.Round, strokeJoin: Path.Join = Path.Join.Round) {
+    fun startPath(strokeColor: Int = Color.GREEN, strokeWidth: Float = 5.5f, strokeCap: Path.Cap = Path.Cap.Round, strokeJoin: Path.Join = Path.Join.Round) {
         mPaths += Path(strokeColor, strokeWidth, strokeCap, strokeJoin)
     }
 
@@ -37,7 +37,7 @@ class Svg(private val width: Int, private val height: Int) {
         mPaths.clear()
     }
 
-    class Path(private val strokeColor: Int, private val strokeWidth: Int, private val strokeCap: Cap, private val strokeJoin: Join) {
+    class Path(private val strokeColor: Int, private val strokeWidth: Float, private val strokeCap: Cap, private val strokeJoin: Join) {
         internal val mData: MutableList<Command> = mutableListOf()
 
         enum class Cap {

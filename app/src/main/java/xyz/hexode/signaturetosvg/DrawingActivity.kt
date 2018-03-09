@@ -123,7 +123,7 @@ class DrawingActivity : AppCompatActivity() {
 
         private fun touchStart(x: Float, y: Float) {
             mPath.reset()
-            mSvg.startPath(mPaint.color, mPaint.strokeWidth.toInt())
+            mSvg.startPath(mPaint.color, mPaint.strokeWidth)
             mPath.moveTo(x, y)
             mSvg.moveTo(x, y)
             mX = x
