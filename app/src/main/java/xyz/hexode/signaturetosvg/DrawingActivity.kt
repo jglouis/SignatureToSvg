@@ -25,7 +25,7 @@ import java.io.FileOutputStream
  */
 class DrawingActivity : AppCompatActivity() {
 
-    private var mPaint: Paint = Paint()
+    private val mPaint: Paint = Paint()
     private val mDrawingView: DrawingView by lazy { DrawingView(this) }
 
     companion object {
@@ -45,6 +45,8 @@ class DrawingActivity : AppCompatActivity() {
         mPaint.strokeJoin = Paint.Join.ROUND
         mPaint.strokeCap = Paint.Cap.ROUND
         mPaint.strokeWidth = 12f
+
+        textViewSignature.bringToFront()
 
         buttonSave.setOnClickListener {
             if (ContextCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED) {
@@ -96,7 +98,15 @@ class DrawingActivity : AppCompatActivity() {
         private var mBitmap: Bitmap? = null
         private var mCanvas: Canvas? = null
         private val mPath: Path = Path()
-        internal val mSvg: Svg by lazy { Svg(measuredWidth, measuredHeight) }
+        internal val mSvg: Svg by lazy {
+            val svg = Svg(measuredWidth, measuredHeight)
+            svg.addText(textViewSignature.x,
+                    textViewSignature.y,
+                    textViewSignature.text.toString(),
+                    textViewSignature.textSize.toInt(),
+                    fillColor = textViewSignature.currentTextColor)
+            svg
+        }
         private val mBitmapPaint: Paint = Paint(Paint.DITHER_FLAG)
 
         private var mX: Float = 0f
