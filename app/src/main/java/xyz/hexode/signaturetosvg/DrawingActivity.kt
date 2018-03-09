@@ -11,7 +11,6 @@ import android.support.v4.content.ContextCompat
 import android.support.v7.app.AppCompatActivity
 import android.view.MotionEvent
 import android.view.View
-import android.widget.Toast
 import com.flask.colorpicker.ColorPickerView
 import com.flask.colorpicker.builder.ColorPickerDialogBuilder
 import kotlinx.android.synthetic.main.activity_drawing.*
@@ -32,7 +31,6 @@ class DrawingActivity : AppCompatActivity() {
     companion object {
         internal const val REQUEST_CODE_SAVE_PERMISSION = 123
         const val TOUCH_TOLERANCE = 4f
-        const val MIN_TIME_BETWEEN_TWO_INVALIDATE_MS = 0
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -98,12 +96,11 @@ class DrawingActivity : AppCompatActivity() {
         private var mBitmap: Bitmap? = null
         private var mCanvas: Canvas? = null
         private val mPath: Path = Path()
-        internal var mSvg: Svg = Svg(0, 0)
+        internal val mSvg: Svg by lazy { Svg(measuredWidth, measuredHeight) }
         private val mBitmapPaint: Paint = Paint(Paint.DITHER_FLAG)
 
         private var mX: Float = 0f
         private var mY: Float = 0f
-        private var mLastInvalidate = System.currentTimeMillis()
         private var mDirtyRect: Rect? = null
 
         override fun onSizeChanged(w: Int, h: Int, oldw: Int, oldh: Int) {
@@ -111,7 +108,6 @@ class DrawingActivity : AppCompatActivity() {
 
             mBitmap = Bitmap.createBitmap(w, h, Bitmap.Config.ARGB_8888)
             mCanvas = Canvas(mBitmap)
-            mSvg = Svg(measuredWidth, measuredHeight)
         }
 
         override fun onDraw(canvas: Canvas) {
@@ -147,6 +143,7 @@ class DrawingActivity : AppCompatActivity() {
             // commit the path to our offscreen
             mCanvas?.drawPath(mPath, mPaint)
             // kill this so we don't double draw
+            mDirtyRect = null
             mPath.reset()
         }
 
@@ -177,17 +174,13 @@ class DrawingActivity : AppCompatActivity() {
                     touchStart(x, y)
                 }
                 MotionEvent.ACTION_MOVE -> {
-                    val now = System.currentTimeMillis()
-                    if (now - mLastInvalidate > MIN_TIME_BETWEEN_TWO_INVALIDATE_MS) {
-                        // take pen width into account
-                        mDirtyRect!!.top -= Math.ceil(mPaint.strokeWidth.toDouble()).toInt()
-                        mDirtyRect!!.left -= Math.ceil(mPaint.strokeWidth.toDouble()).toInt()
-                        mDirtyRect!!.bottom += Math.ceil(mPaint.strokeWidth.toDouble()).toInt()
-                        mDirtyRect!!.right += Math.ceil(mPaint.strokeWidth.toDouble()).toInt()
-                        touchMove(x, y)
-                        invalidate(mDirtyRect)
-                        mLastInvalidate = now
-                    }
+                    // take pen width into account
+                    mDirtyRect!!.top -= Math.ceil(mPaint.strokeWidth.toDouble()).toInt()
+                    mDirtyRect!!.left -= Math.ceil(mPaint.strokeWidth.toDouble()).toInt()
+                    mDirtyRect!!.bottom += Math.ceil(mPaint.strokeWidth.toDouble()).toInt()
+                    mDirtyRect!!.right += Math.ceil(mPaint.strokeWidth.toDouble()).toInt()
+                    touchMove(x, y)
+                    invalidate(mDirtyRect)
                 }
                 MotionEvent.ACTION_UP -> {
                     touchUp()
