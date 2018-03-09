@@ -2,4 +2,5 @@
     <string name="app_name">SignatureToSvg</string>
     <string name="save">Save</string>
     <string name="pick_color">Pick Color</string>
+    <string name="clear">Clear</string>
 </resources>

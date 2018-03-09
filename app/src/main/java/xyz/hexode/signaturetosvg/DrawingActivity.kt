@@ -55,6 +55,10 @@ class DrawingActivity : AppCompatActivity() {
                     .build()
                     .show()
         }
+
+        buttonClear.setOnClickListener {
+            dv.reset()
+        }
     }
 
     inner class DrawingView(context: Context) : View(context) {
@@ -81,15 +85,14 @@ class DrawingActivity : AppCompatActivity() {
             super.onSizeChanged(w, h, oldw, oldh)
 
             mBitmap = Bitmap.createBitmap(w, h, Bitmap.Config.ARGB_8888)
-            mCanvas = Canvas(mBitmap!!)
-
+            mCanvas = Canvas(mBitmap)
             mSvg = Svg(measuredWidth, measuredHeight)
         }
 
         override fun onDraw(canvas: Canvas) {
             super.onDraw(canvas)
 
-            canvas.drawBitmap(mBitmap!!, 0f, 0f, mBitmapPaint)
+            canvas.drawBitmap(mBitmap, 0f, 0f, mBitmapPaint)
             canvas.drawPath(mPath, mPaint)
         }
 
@@ -117,9 +120,16 @@ class DrawingActivity : AppCompatActivity() {
             mPath.lineTo(mX, mY)
             mSvg.lineTo(mX, mY)
             // commit the path to our offscreen
-            mCanvas!!.drawPath(mPath, mPaint)
+            mCanvas?.drawPath(mPath, mPaint)
             // kill this so we don't double draw
             mPath.reset()
+        }
+
+        internal fun reset() {
+            mPath.reset()
+            mSvg.reset()
+            mCanvas?.drawColor(Color.WHITE)
+            invalidate()
         }
 
         override fun onTouchEvent(event: MotionEvent): Boolean {

@@ -33,6 +33,10 @@ class Svg(private val width: Int, private val height: Int) {
         out.write("</svg>".toByteArray())
     }
 
+    fun reset() {
+        mPaths.clear()
+    }
+
     class Path(private val strokeColor: Int, private val strokeWidth: Int) {
         internal val mData: MutableList<Command> = mutableListOf()
 

@@ -34,6 +34,13 @@
             android:layout_height="wrap_content"
             android:text="@string/pick_color"
             tools:ignore="ButtonStyle"/>
+
+        <Button
+            android:id="@+id/buttonClear"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/clear"
+            tools:ignore="ButtonStyle"/>
     </LinearLayout>
 
 
