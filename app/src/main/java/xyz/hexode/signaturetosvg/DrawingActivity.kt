@@ -15,6 +15,7 @@ import java.io.FileOutputStream
 
 
 const val TOUCH_TOLERANCE = 4f
+const val MIN_TIME_BETWEEN_TWO_INVALIDATE_MS = 10
 
 /**
  * Created by JGLouis on 08/03/2018.
@@ -68,18 +69,11 @@ class DrawingActivity : AppCompatActivity() {
         private val mPath: Path = Path()
         internal var mSvg: Svg = Svg(0, 0)
         private val mBitmapPaint: Paint = Paint(Paint.DITHER_FLAG)
-        private val circlePaint: Paint = Paint()
 
         private var mX: Float = 0f
         private var mY: Float = 0f
-
-        init {
-            circlePaint.isAntiAlias = true
-            circlePaint.color = Color.BLUE
-            circlePaint.style = Paint.Style.STROKE
-            circlePaint.strokeJoin = Paint.Join.MITER
-            circlePaint.strokeWidth = 4f
-        }
+        private var mLastInvalidate = System.currentTimeMillis()
+        private var mDirtyRect: Rect? = null
 
         override fun onSizeChanged(w: Int, h: Int, oldw: Int, oldh: Int) {
             super.onSizeChanged(w, h, oldw, oldh)
@@ -135,15 +129,34 @@ class DrawingActivity : AppCompatActivity() {
         override fun onTouchEvent(event: MotionEvent): Boolean {
             val x = event.x
             val y = event.y
+            if (mDirtyRect == null) {
+                mDirtyRect = Rect(
+                        Math.floor(x.toDouble()).toInt(),
+                        Math.floor(y.toDouble()).toInt(),
+                        Math.ceil(x.toDouble()).toInt(),
+                        Math.ceil(y.toDouble()).toInt())
+            }
+            mDirtyRect!!.top = Math.min(mDirtyRect!!.top, Math.floor(y.toDouble()).toInt())
+            mDirtyRect!!.bottom = Math.max(mDirtyRect!!.bottom, Math.ceil(y.toDouble()).toInt())
+            mDirtyRect!!.left = Math.min(mDirtyRect!!.left, Math.floor(x.toDouble()).toInt())
+            mDirtyRect!!.right = Math.max(mDirtyRect!!.right, Math.ceil(x.toDouble()).toInt())
 
             when (event.action) {
                 MotionEvent.ACTION_DOWN -> {
                     touchStart(x, y)
-                    invalidate()
                 }
                 MotionEvent.ACTION_MOVE -> {
-                    touchMove(x, y)
-                    invalidate()
+                    val now = System.currentTimeMillis()
+                    if (now - mLastInvalidate > MIN_TIME_BETWEEN_TWO_INVALIDATE_MS) {
+                        // take pen width into account
+                        mDirtyRect!!.top -= Math.ceil(mPaint.strokeWidth.toDouble()).toInt()
+                        mDirtyRect!!.left -= Math.ceil(mPaint.strokeWidth.toDouble()).toInt()
+                        mDirtyRect!!.bottom += Math.ceil(mPaint.strokeWidth.toDouble()).toInt()
+                        mDirtyRect!!.right += Math.ceil(mPaint.strokeWidth.toDouble()).toInt()
+                        touchMove(x, y)
+                        invalidate(mDirtyRect)
+                        mLastInvalidate = now
+                    }
                 }
                 MotionEvent.ACTION_UP -> {
                     touchUp()
