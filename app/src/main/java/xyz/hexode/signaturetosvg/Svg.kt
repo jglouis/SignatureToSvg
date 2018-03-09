@@ -59,10 +59,8 @@ class Svg(private val width: Int, private val height: Int) {
         }
 
         internal fun writeXml(out: OutputStream) {
-            val red = Color.red(strokeColor)
-            val green = Color.green(strokeColor)
-            val blue = Color.blue(strokeColor)
-            out.write("<path stroke=\"rgb($red,$green,$blue)\" fill=\"none\" stroke-width=\"$strokeWidth\" d=\"".toByteArray())
+            val strokeColorWithoutAlpha = String.format("#%06X", strokeColor and 0xFFFFFF)
+            out.write("<path stroke=\"$strokeColorWithoutAlpha\" fill=\"none\" stroke-width=\"$strokeWidth\" d=\"".toByteArray())
             mData.forEach {
                 out.write(it.toString().toByteArray())
             }
