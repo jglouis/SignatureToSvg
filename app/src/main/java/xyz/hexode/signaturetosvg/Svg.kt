@@ -11,8 +11,8 @@ import java.io.OutputStream
 class Svg(private val width: Int, private val height: Int) {
     private val mPaths: MutableList<Path> = mutableListOf()
 
-    fun startPath(strokeColor: Int = Color.GREEN, strokeWidth: Int = 5) {
-        mPaths += Path(strokeColor, strokeWidth)
+    fun startPath(strokeColor: Int = Color.GREEN, strokeWidth: Int = 5, strokeCap: Path.Cap = Path.Cap.Round, strokeJoin: Path.Join = Path.Join.Round) {
+        mPaths += Path(strokeColor, strokeWidth, strokeCap, strokeJoin)
     }
 
     fun moveTo(x: Float, y: Float) {
@@ -37,8 +37,28 @@ class Svg(private val width: Int, private val height: Int) {
         mPaths.clear()
     }
 
-    class Path(private val strokeColor: Int, private val strokeWidth: Int) {
+    class Path(private val strokeColor: Int, private val strokeWidth: Int, private val strokeCap: Cap, private val strokeJoin: Join) {
         internal val mData: MutableList<Command> = mutableListOf()
+
+        enum class Cap {
+            Butt,
+            Round,
+            Square;
+
+            override fun toString(): String {
+                return super.toString().toLowerCase()
+            }
+        }
+
+        enum class Join {
+            Miter,
+            Round,
+            Bevel;
+
+            override fun toString(): String {
+                return super.toString().toLowerCase()
+            }
+        }
 
         enum class CommandType {
             M, // moveTo
@@ -60,7 +80,13 @@ class Svg(private val width: Int, private val height: Int) {
 
         internal fun writeXml(out: OutputStream) {
             val strokeColorWithoutAlpha = String.format("#%06X", strokeColor and 0xFFFFFF)
-            out.write("<path stroke=\"$strokeColorWithoutAlpha\" fill=\"none\" stroke-width=\"$strokeWidth\" d=\"".toByteArray())
+            out.write(("<path " +
+                    "stroke=\"$strokeColorWithoutAlpha\" " +
+                    "fill=\"none\" " +
+                    "stroke-width=\"$strokeWidth\" " +
+                    "stroke-linecap=\"$strokeCap\" " +
+                    "stroke-linejoin=\"$strokeJoin\" " +
+                    "d=\"").toByteArray())
             mData.forEach {
                 out.write(it.toString().toByteArray())
             }
