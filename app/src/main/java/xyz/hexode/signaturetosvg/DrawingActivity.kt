@@ -1,21 +1,23 @@
 package xyz.hexode.signaturetosvg
 
+import android.Manifest
 import android.content.Context
+import android.content.pm.PackageManager
 import android.graphics.*
+import android.os.Build
 import android.os.Bundle
 import android.os.Environment
+import android.support.v4.content.ContextCompat
 import android.support.v7.app.AppCompatActivity
 import android.view.MotionEvent
 import android.view.View
+import android.widget.Toast
 import com.flask.colorpicker.ColorPickerView
 import com.flask.colorpicker.builder.ColorPickerDialogBuilder
 import kotlinx.android.synthetic.main.activity_drawing.*
 import java.io.File
 import java.io.FileOutputStream
 
-
-const val TOUCH_TOLERANCE = 4f
-const val MIN_TIME_BETWEEN_TWO_INVALIDATE_MS = 10
 
 /**
  * Created by JGLouis on 08/03/2018.
@@ -25,12 +27,19 @@ const val MIN_TIME_BETWEEN_TWO_INVALIDATE_MS = 10
 class DrawingActivity : AppCompatActivity() {
 
     private var mPaint: Paint = Paint()
+    private val mDrawingView: DrawingView by lazy { DrawingView(this) }
+
+    companion object {
+        internal const val REQUEST_CODE_SAVE_PERMISSION = 123
+        const val TOUCH_TOLERANCE = 4f
+        const val MIN_TIME_BETWEEN_TWO_INVALIDATE_MS = 0
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        val dv = DrawingView(this)
+
         setContentView(R.layout.activity_drawing)
-        drawingLayout.addView(dv)
+        drawingLayout.addView(mDrawingView)
         mPaint.isAntiAlias = true
         mPaint.isDither = true
         mPaint.color = Color.GREEN
@@ -40,8 +49,13 @@ class DrawingActivity : AppCompatActivity() {
         mPaint.strokeWidth = 12f
 
         buttonSave.setOnClickListener {
-            val outFile = FileOutputStream(File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS), "signature.svg"))
-            dv.mSvg.writeXml(outFile)
+            if (ContextCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED) {
+                saveDrawing()
+            } else {
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                    requestPermissions(arrayOf(Manifest.permission.WRITE_EXTERNAL_STORAGE), REQUEST_CODE_SAVE_PERMISSION)
+                }
+            }
         }
 
         buttonPickColor.setOnClickListener {
@@ -58,7 +72,24 @@ class DrawingActivity : AppCompatActivity() {
         }
 
         buttonClear.setOnClickListener {
-            dv.reset()
+            mDrawingView.reset()
+        }
+    }
+
+    private fun saveDrawing() {
+        val outFile = FileOutputStream(File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS), "signature.svg"))
+        mDrawingView.mSvg.writeXml(outFile)
+    }
+
+    override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
+        when (requestCode) {
+            REQUEST_CODE_SAVE_PERMISSION -> {
+                if ((grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED)) {
+                    saveDrawing()
+                } else {
+                    toast("Could not save file without permission ${Manifest.permission.WRITE_EXTERNAL_STORAGE}")
+                }
+            }
         }
     }
 
