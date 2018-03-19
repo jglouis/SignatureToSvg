@@ -163,13 +163,13 @@ class DrawingActivity : AppCompatActivity() {
         internal fun reset() {
             mPath.reset()
             mSvg.reset()
-            mCanvas?.drawColor(Color.WHITE)
+            mCanvas?.drawColor(Color.TRANSPARENT, PorterDuff.Mode.CLEAR)
             invalidate()
         }
 
         internal fun undoLastPath() {
             mSvg.undoLastPath()
-            mCanvas?.drawColor(Color.WHITE)
+            mCanvas?.drawColor(Color.TRANSPARENT, PorterDuff.Mode.CLEAR)
             mSvg.getAndroidPathsAndPaints().forEach {
                 mCanvas?.drawPath(it.first, it.second)
             }
