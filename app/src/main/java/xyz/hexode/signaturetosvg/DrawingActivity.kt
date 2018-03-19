@@ -48,6 +48,10 @@ class DrawingActivity : AppCompatActivity() {
 
         textViewSignature.bringToFront()
 
+        buttonUndo.setOnClickListener {
+            mDrawingView.undoLastPath()
+        }
+
         buttonSave.setOnClickListener {
             if (ContextCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED) {
                 saveDrawing()
@@ -160,6 +164,15 @@ class DrawingActivity : AppCompatActivity() {
             mPath.reset()
             mSvg.reset()
             mCanvas?.drawColor(Color.WHITE)
+            invalidate()
+        }
+
+        internal fun undoLastPath() {
+            mSvg.undoLastPath()
+            mCanvas?.drawColor(Color.WHITE)
+            mSvg.getAndroidPathsAndPaints().forEach {
+                mCanvas?.drawPath(it.first, it.second)
+            }
             invalidate()
         }
 

@@ -4,4 +4,5 @@
     <string name="pick_color">Pick Color</string>
     <string name="clear">Clear</string>
     <string name="sign_here">Sign here</string>
+    <string name="undo">Undo</string>
 </resources>

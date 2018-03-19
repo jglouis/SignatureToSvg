@@ -1,19 +1,19 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+              xmlns:app="http://schemas.android.com/apk/res-auto"
               xmlns:tools="http://schemas.android.com/tools"
               android:layout_width="match_parent"
               android:layout_height="match_parent"
-              xmlns:app="http://schemas.android.com/apk/res-auto"
               android:orientation="vertical">
 
     <RelativeLayout
         android:id="@+id/drawingLayout"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:layout_weight="10"
-        android:padding="3dp"
         android:layout_margin="5dp"
-        android:background="@drawable/layout_border">
+        android:layout_weight="10"
+        android:background="@drawable/layout_border"
+        android:padding="3dp">
 
         <TextView
             android:id="@+id/textViewSignature"
@@ -28,9 +28,17 @@
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="horizontal"
+        android:layout_weight="1"
         android:gravity="center"
-        android:layout_weight="1">
+        android:orientation="horizontal">
+
+        <Button
+            android:id="@+id/buttonUndo"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/undo"
+            tools:ignore="ButtonStyle"/>
+
         <Button
             android:id="@+id/buttonSave"
             android:layout_width="wrap_content"
@@ -51,6 +59,8 @@
             android:layout_height="wrap_content"
             android:text="@string/clear"
             tools:ignore="ButtonStyle"/>
+
+
     </LinearLayout>
 
 

@@ -1,6 +1,7 @@
 package xyz.hexode.signaturetosvg
 
 import android.graphics.Color
+import android.graphics.Paint
 import java.io.OutputStream
 
 /**
@@ -12,8 +13,27 @@ class Svg(private val width: Int, private val height: Int) {
     private val mPaths = mutableListOf<Path>()
     private val mTexts = mutableListOf<Text>()
 
-    fun startPath(strokeColor: Int = Color.GREEN, strokeWidth: Float = 5.5f, strokeCap: Path.Cap = Path.Cap.Round, strokeJoin: Path.Join = Path.Join.Round) {
+    fun startPath(strokeColor: Int = Color.GREEN, strokeWidth: Float = 5.5f, strokeCap: Paint.Cap = Paint.Cap.ROUND, strokeJoin: Paint.Join = Paint.Join.ROUND) {
         mPaths += Path(strokeColor, strokeWidth, strokeCap, strokeJoin)
+    }
+
+    fun undoLastPath() {
+        if(mPaths.size > 0) mPaths.removeAt(mPaths.size - 1)
+    }
+
+    fun getAndroidPathsAndPaints(): List<Pair<android.graphics.Path, Paint>> {
+        return List(mPaths.size, { index ->
+            val paint = Paint().apply {
+                this.strokeWidth = mPaths[index].strokeWidth
+                this.color = mPaths[index].strokeColor
+                this.strokeCap = mPaths[index].strokeCap
+                this.strokeJoin = mPaths[index].strokeJoin
+                this.isAntiAlias = true
+                this.isDither = true
+                this.style = Paint.Style.STROKE
+            }
+            Pair(mPaths[index].getAndroidPath(), paint)
+        })
     }
 
     fun moveTo(x: Float, y: Float) {
@@ -52,31 +72,12 @@ class Svg(private val width: Int, private val height: Int) {
         mPaths.clear()
     }
 
-    class Path(private val strokeColor: Int,
-               private val strokeWidth: Float,
-               private val strokeCap: Cap,
-               private val strokeJoin: Join) {
+    class Path(internal val strokeColor: Int,
+               internal val strokeWidth: Float,
+               internal val strokeCap: Paint.Cap,
+               internal val strokeJoin: Paint.Join) {
         internal val mData: MutableList<Command> = mutableListOf()
 
-        enum class Cap {
-            Butt,
-            Round,
-            Square;
-
-            override fun toString(): String {
-                return super.toString().toLowerCase()
-            }
-        }
-
-        enum class Join {
-            Miter,
-            Round,
-            Bevel;
-
-            override fun toString(): String {
-                return super.toString().toLowerCase()
-            }
-        }
 
         enum class CommandType {
             M, // moveTo
@@ -84,7 +85,7 @@ class Svg(private val width: Int, private val height: Int) {
             Q, // quadratic Bezier curve
         }
 
-        class Command(private val type: CommandType, private vararg val params: Float) {
+        class Command(internal val type: CommandType, internal vararg val params: Float) {
             override fun toString(): String {
                 val sb = StringBuilder()
                 sb.append(type.toString())
@@ -96,20 +97,34 @@ class Svg(private val width: Int, private val height: Int) {
             }
         }
 
+        internal fun getAndroidPath(): android.graphics.Path {
+            return android.graphics.Path().apply {
+                mData.forEach {
+                    when (it.type) {
+                        Svg.Path.CommandType.M -> this.moveTo(it.params[0], it.params[1])
+                        Svg.Path.CommandType.L -> this.lineTo(it.params[0], it.params[1])
+                        Svg.Path.CommandType.Q -> this.quadTo(it.params[0], it.params[1], it.params[2], it.params[3])
+                    }
+                }
+            }
+        }
+
         internal fun writeXml(out: OutputStream) {
             val strokeColorWithoutAlpha = colorToHexadecimalString(strokeColor)
             out.write(("<path " +
                     "stroke=\"$strokeColorWithoutAlpha\" " +
                     "fill=\"none\" " +
                     "stroke-width=\"$strokeWidth\" " +
-                    "stroke-linecap=\"$strokeCap\" " +
-                    "stroke-linejoin=\"$strokeJoin\" " +
+                    "stroke-linecap=\"${strokeCap.toString().toLowerCase()}\" " +
+                    "stroke-linejoin=\"${strokeJoin.toString().toLowerCase()}\" " +
                     "d=\"").toByteArray())
             mData.forEach {
                 out.write(it.toString().toByteArray())
             }
             out.write("\" />".toByteArray())
         }
+
+
     }
 
     class Text(private val x: Float,
