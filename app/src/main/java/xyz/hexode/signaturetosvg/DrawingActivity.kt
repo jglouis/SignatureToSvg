@@ -65,7 +65,6 @@ class DrawingActivity : AppCompatActivity() {
                     .initialColor(mPaint.color)
                     .wheelType(ColorPickerView.WHEEL_TYPE.FLOWER)
                     .density(12)
-                    .setOnColorSelectedListener { selectedColor -> toast("onColorSelected: 0x" + Integer.toHexString(selectedColor)) }
                     .setPositiveButton("ok") { _, selectedColor, _ -> mPaint.color = selectedColor }
                     .build()
                     .show()
