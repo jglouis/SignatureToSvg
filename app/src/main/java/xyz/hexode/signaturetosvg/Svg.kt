@@ -23,16 +23,7 @@ class Svg(private val width: Int, private val height: Int) {
 
     fun getAndroidPathsAndPaints(): List<Pair<android.graphics.Path, Paint>> {
         return List(mPaths.size, { index ->
-            val paint = Paint().apply {
-                this.strokeWidth = mPaths[index].strokeWidth
-                this.color = mPaths[index].strokeColor
-                this.strokeCap = mPaths[index].strokeCap
-                this.strokeJoin = mPaths[index].strokeJoin
-                this.isAntiAlias = true
-                this.isDither = true
-                this.style = Paint.Style.STROKE
-            }
-            Pair(mPaths[index].getAndroidPath(), paint)
+            Pair(mPaths[index].getAndroidPath(), mPaths[index].getPaint())
         })
     }
 
@@ -72,10 +63,10 @@ class Svg(private val width: Int, private val height: Int) {
         mPaths.clear()
     }
 
-    class Path(internal val strokeColor: Int,
-               internal val strokeWidth: Float,
-               internal val strokeCap: Paint.Cap,
-               internal val strokeJoin: Paint.Join) {
+    class Path(private val strokeColor: Int,
+               private val strokeWidth: Float,
+               private val strokeCap: Paint.Cap,
+               private val strokeJoin: Paint.Join) {
         internal val mData: MutableList<Command> = mutableListOf()
 
 
@@ -106,6 +97,18 @@ class Svg(private val width: Int, private val height: Int) {
                         Svg.Path.CommandType.Q -> this.quadTo(it.params[0], it.params[1], it.params[2], it.params[3])
                     }
                 }
+            }
+        }
+
+        internal fun getPaint(): Paint {
+            return Paint().apply {
+                this.strokeWidth = this@Path.strokeWidth
+                this.color = strokeColor
+                this.strokeCap = this@Path.strokeCap
+                this.strokeJoin = this@Path.strokeJoin
+                this.isAntiAlias = true
+                this.isDither = true
+                this.style = Paint.Style.STROKE
             }
         }
 
