@@ -1,6 +1,7 @@
 package xyz.hexode.signaturetosvg
 
 import android.Manifest
+import android.annotation.SuppressLint
 import android.content.Context
 import android.content.pm.PackageManager
 import android.graphics.*
@@ -114,7 +115,6 @@ class DrawingActivity : AppCompatActivity() {
 
         private var mX: Float = 0f
         private var mY: Float = 0f
-        private var mDirtyRect: Rect? = null
 
         override fun onSizeChanged(w: Int, h: Int, oldw: Int, oldh: Int) {
             super.onSizeChanged(w, h, oldw, oldh)
@@ -156,7 +156,6 @@ class DrawingActivity : AppCompatActivity() {
             // commit the path to our offscreen
             mCanvas?.drawPath(mPath, mPaint)
             // kill this so we don't double draw
-            mDirtyRect = null
             mPath.reset()
         }
 
@@ -176,33 +175,18 @@ class DrawingActivity : AppCompatActivity() {
             invalidate()
         }
 
+        @SuppressLint("ClickableViewAccessibility")
         override fun onTouchEvent(event: MotionEvent): Boolean {
             val x = event.x
             val y = event.y
-            if (mDirtyRect == null) {
-                mDirtyRect = Rect(
-                        Math.floor(x.toDouble()).toInt(),
-                        Math.floor(y.toDouble()).toInt(),
-                        Math.ceil(x.toDouble()).toInt(),
-                        Math.ceil(y.toDouble()).toInt())
-            }
-            mDirtyRect!!.top = Math.min(mDirtyRect!!.top, Math.floor(y.toDouble()).toInt())
-            mDirtyRect!!.bottom = Math.max(mDirtyRect!!.bottom, Math.ceil(y.toDouble()).toInt())
-            mDirtyRect!!.left = Math.min(mDirtyRect!!.left, Math.floor(x.toDouble()).toInt())
-            mDirtyRect!!.right = Math.max(mDirtyRect!!.right, Math.ceil(x.toDouble()).toInt())
 
             when (event.action) {
                 MotionEvent.ACTION_DOWN -> {
                     touchStart(x, y)
                 }
                 MotionEvent.ACTION_MOVE -> {
-                    // take pen width into account
-                    mDirtyRect!!.top -= Math.ceil(mPaint.strokeWidth.toDouble()).toInt()
-                    mDirtyRect!!.left -= Math.ceil(mPaint.strokeWidth.toDouble()).toInt()
-                    mDirtyRect!!.bottom += Math.ceil(mPaint.strokeWidth.toDouble()).toInt()
-                    mDirtyRect!!.right += Math.ceil(mPaint.strokeWidth.toDouble()).toInt()
                     touchMove(x, y)
-                    invalidate(mDirtyRect)
+                    invalidate()
                 }
                 MotionEvent.ACTION_UP -> {
                     touchUp()
